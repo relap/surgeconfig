@@ -43,7 +43,7 @@
       var usedPercent = toPercent(usedBytes, TOTAL_BYTES_DEC);
 
       // 文本格式：已用显示到 3 位小数，剩余 2 位小数（可按需调整）
-      var usedText = usedGB_dec.toFixed(3) + "GB";
+      var usedText = usedGB_dec.toFixed(2) + "GB";
       var remainText = remainGB_dec.toFixed(2) + "GB";
 
       // 重置天数
