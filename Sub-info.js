@@ -22,7 +22,8 @@
         return apiFormatError(args, "API响应格式错误");
       }
 
-      var total = info.total;
+      // 固定总流量 100GB
+      var total = 100 * 1024 * 1024 * 1024;
       var used = info.used;
       if (used > total) used = total;
       var remain = total - used;
@@ -30,19 +31,20 @@
 
       var resetLeft = getRemainingDays(info.resetDay);
 
-      var content = [];
-      content.push("已用：" + toPercent(used, total) + " \t|  剩余：" + bytesToSize(remain));
+      // 已用百分比 + 已用GB
+      var usedPercent = toPercent(used, total);
+      var usedText = bytesToSize(used);
+
+      var remainText = bytesToSize(remain);
+
+      var content = "已用: " + usedText + " (" + usedPercent + ") | 剩余: " + remainText;
       if (typeof resetLeft === "number") {
-        content.push("重置：" + resetLeft + "天");
+        content += " | 重置: " + resetLeft + "天";
       }
 
-      var now = new Date();
-      var hh = ("0" + now.getHours()).slice(-2);
-      var mm = ("0" + now.getMinutes()).slice(-2);
-
       $done({
-        title: (args.title || "JMS 流量信息") + " | " + bytesToSize(total) + " | " + hh + ":" + mm,
-        content: content.join("\n"),
+        title: "JustMySocks LA100 | 100.00GB",
+        content: content,
         icon: args.icon || "airplane.circle",
         "icon-color": args.color || "#007aff"
       });
@@ -69,24 +71,17 @@ function apiFormatError(args, msg) {
   });
 }
 
-/**
- * 鲁棒解析 $argument：
- * - 专门截取 url= ... 到下一个已知键的范围（即使未编码也能拿到完整 URL）
- * - 其它键再单独解析
- */
 function getArgs() {
   var raw = $argument || "";
   var out = {};
   var knownKeys = ["title", "icon", "color", "expire", "reset_day", "debug"];
 
-  // 抓 url
   var idx = raw.indexOf("url=");
   var cutStart = -1;
   var cutEnd = -1;
   if (idx >= 0) {
-    cutStart = idx + 4; // "url=".length
+    cutStart = idx + 4;
     cutEnd = raw.length;
-    // 找到离 url= 最近的下一个已知键位置
     for (var i = 0; i < knownKeys.length; i++) {
       var key = "&" + knownKeys[i] + "=";
       var p = raw.indexOf(key, cutStart);
@@ -100,7 +95,6 @@ function getArgs() {
     }
   }
 
-  // 去掉 url= 片段后解析其它键
   var rest = raw;
   if (idx >= 0) {
     rest = raw.substring(0, idx) + raw.substring(cutEnd);
@@ -122,7 +116,6 @@ function getArgs() {
   return out;
 }
 
-// 请求并解析 JMS JSON
 function getDataInfo(url, debug, cb) {
   var headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile Surge",
@@ -166,7 +159,6 @@ function getDataInfo(url, debug, cb) {
   });
 }
 
-// 计算距重置日剩余天数（允许返回 0，表示今天重置）
 function getRemainingDays(resetDay) {
   if (resetDay === undefined || resetDay === null) return undefined;
   resetDay = Number(resetDay);
